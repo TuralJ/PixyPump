@@ -1,0 +1,32 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# macOS
+.DS_Store
+
+# Local bundles and backups from editing sessions
+*.tgz
+*.bak-*
+_mvtest/
+
+# Secrets (never commit real keys)
+*.p8
+GoogleService-Info.plist
+Secrets.xcconfig
+
+# Local scratch
+_to_delete/

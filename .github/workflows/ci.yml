@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  design-lint:
+    name: Design rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for hardcoded values
+        run: python3 scripts/design_lint.py
+
+  build:
+    name: Build (iOS Simulator)
+    runs-on: macos-latest
+    needs: design-lint
+    # The app targets iOS 27, so this job needs a runner with Xcode 27.
+    # Until GitHub's runners have it, failures here can be ignored; the design check still runs.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Build
+        run: |
+          xcodebuild build \
+            -project "PixyPump.xcodeproj" \
+            -scheme PixyPump \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
