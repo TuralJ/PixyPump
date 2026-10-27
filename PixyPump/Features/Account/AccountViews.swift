@@ -461,6 +461,8 @@ struct AccountSection: View {
                 try await auth.deleteAccount()
                 if alsoPhoneData { DataTools.deleteEverything(context: context) }
                 Haptics.warning()
+            } catch AuthError.cancelled {
+                // Closed Apple's confirm sheet: nothing deleted, nothing to say.
             } catch {
                 message = error.localizedDescription
             }

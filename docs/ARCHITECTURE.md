@@ -19,7 +19,7 @@ Xcode uses a synchronized folder, so new files and folders are picked up automat
 | `App/` | `GymTrackerApp` (entry, splash, colour scheme), `ContentView` (tabs, tab requests), `SwipeNavigation` (`AppTab`), `Splash`, `DevMode` |
 | `DesignSystem/` | `DesignTokens` (`DS.*`, `AppInfo`), `Theme` (colours, fonts, cards, buttons, haptics, appearance themes), `Motion`, `PixelIcons`, `UXKit` (Undo, Settings button, MomentQueue), `Celebration` |
 | `Models/` | SwiftData models (`Models`, `FoodModels`), `Routine` (the plan), `TodayChanges` (today's skips/swaps/order/early finish), `ActiveWorkout`, `TrainingLog`, `Units` |
-| `Services/` | `Backup`, `DataTools` (export, delete everything), `HealthSync`, `NotificationPlanner`, `SoundEffects` (`SFX`), `Auth` (account plug), `LiveRest` + `RestActivity` (Live Activity) |
+| `Services/` | `Backup`, `DataTools` (export, delete everything), `HealthSync`, `NotificationPlanner`, `SoundEffects` (`SFX`), `Auth` (account plug), `FirebaseSetup` + `FirebaseAuth` (Firebase accounts), `LiveRest` + `RestActivity` (Live Activity) |
 | `Features/Home` | Home tab: workout card, today tiles (`TodayTile`), one reminder, challenges sheet |
 | `Features/Workout` | Workout tab (list), workout mode (`WorkoutSession`: strip, paging, `WorkoutFlow` rules), exercise screen, summary, rest timer, plate calculator, Plate Stack game |
 | `Features/Plan` | Plan editor, plan generator, plan quiz |
@@ -59,12 +59,21 @@ new versioned key (`…v2`) and migrate instead. Every new key must also be adde
 ## Accounts (backend plug)
 
 `Services/Auth.swift`: screens only talk to `AuthStore`, which talks to an `AuthService`.
-Today it's `MockAuthService` (demo mode, email code `123456`). To connect a backend:
 
-1. Write a type conforming to `AuthService` (Apple token, Google, email code send/verify, sign out, delete account).
-2. Use it in `AuthStore.init`.
-3. For real Sign in with Apple: enable the capability and set `AuthConfig.realAppleSignIn = true`.
-4. Store tokens in the Keychain, not UserDefaults.
+- **`FirebaseAuthService`** (`Services/FirebaseAuth.swift`) is used when `PixyPump/GoogleService-Info.plist` is in
+  the build. Firebase project `pixypump`, bundle ID `com.magsudturalgymapp.pixypump`. Firebase keeps the session
+  (in the Keychain); `auth.user.v1` is only a cache of it.
+- **`MockAuthService`** (demo mode, email code `123456`) is used when the plist is missing, so a fresh clone or CI
+  still builds and runs.
+
+| Sign-in | Status |
+|---|---|
+| Google | Done. Google SDK → Firebase credential. URL scheme (`REVERSED_CLIENT_ID`) in `PixyPump-Project-Info.plist`. |
+| Apple | Done, not yet tested on a device. Native sheet with a SHA-256 nonce → Firebase. Deleting an account re-asks Apple and revokes the token (needs the Apple key in Firebase → Authentication → Apple → OAuth code flow). |
+| Email | Planned: Firebase email link (no 6-digit code). Until then the Firebase build shows "coming soon". |
+
+**`GoogleService-Info.plist` is not in git.** Download it from Firebase → Project settings → Your apps → iOS and put
+it in `PixyPump/`. Real secrets (the Apple `.p8` key) go in the Firebase console only, never in the app.
 
 ## Adding a feature (checklist)
 

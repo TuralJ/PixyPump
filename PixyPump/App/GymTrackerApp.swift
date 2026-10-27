@@ -10,6 +10,8 @@ struct GymTrackerApp: App {
     @State private var showSplash = true
 
     init() {
+        // Accounts backend (skipped when GoogleService-Info.plist is missing).
+        FirebaseSetup.configure()
         // Show the "Rest's over" pop-up even while the app is open.
         UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
         // Pixel font + matching navigation bar titles.
@@ -43,6 +45,8 @@ struct GymTrackerApp: App {
             }
             .preferredColorScheme(.dark)
             .tint(Color.brand)              // ice blue for links, toggles and rings
+            // Sign-in redirects (Google) coming back into the app.
+            .onOpenURL { url in _ = FirebaseAuthService.handle(url) }
         }
     }
 }

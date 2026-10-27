@@ -1,22 +1,22 @@
 import Foundation
 import AuthenticationServices
+import CryptoKit
 import UIKit
 
 // Accounts: optional, "save your progress" style. The app keeps working without one,
 // and signing in never touches the workouts already on this iPhone.
 //
 // All screens talk to `AuthStore`, which talks to an `AuthService`.
-// Today that's `MockAuthService` (works fully offline, for building and testing).
-// To connect a backend later (Supabase, Firebase or your own), write a type that
-// conforms to `AuthService` and set it in `AuthStore.init` — no screen changes needed.
+// That's `FirebaseAuthService` (Services/FirebaseAuth.swift) when GoogleService-Info.plist is in
+// the build, otherwise `MockAuthService` (works fully offline, for building and testing).
 
 // MARK: - Settings you flip when the backend is ready
 
 nonisolated enum AuthConfig {
     /// Use the real "Sign in with Apple" sheet. Needs the "Sign in with Apple" capability
-    /// in Xcode (target → Signing & Capabilities) and a paid developer account.
+    /// (in PixyPump.entitlements) and a paid developer account.
     /// While false, the Apple button signs in a pretend Apple user so you can test the flow.
-    static let realAppleSignIn = false
+    static let realAppleSignIn = true
 
     /// The code the pretend email sign-in accepts (shown on screen while mocking).
     static let mockEmailCode = "123456"
@@ -69,8 +69,8 @@ nonisolated enum AuthError: LocalizedError, Sendable {
 
 @MainActor
 protocol AuthService {
-    /// Apple has already said yes on the phone; send its token to your backend.
-    func signInWithApple(userID: String, identityToken: Data?, fullName: PersonNameComponents?,
+    /// Apple has already said yes on the phone; send its token (and the nonce it was made for) to your backend.
+    func signInWithApple(userID: String, identityToken: Data?, nonce: String?, fullName: PersonNameComponents?,
                          email: String?) async throws -> AuthUser
     /// Google sign-in (Google's SDK or your backend's OAuth).
     func signInWithGoogle() async throws -> AuthUser
@@ -88,7 +88,7 @@ protocol AuthService {
 final class MockAuthService: AuthService {
     private func pause() async { try? await Task.sleep(for: .milliseconds(700)) }
 
-    func signInWithApple(userID: String, identityToken: Data?, fullName: PersonNameComponents?,
+    func signInWithApple(userID: String, identityToken: Data?, nonce: String?, fullName: PersonNameComponents?,
                          email: String?) async throws -> AuthUser {
         await pause()
         let name = fullName.flatMap { PersonNameComponentsFormatter().string(from: $0) }
@@ -137,9 +137,16 @@ final class AuthStore {
     var isMock: Bool { service is MockAuthService }
 
     private init() {
-        service = MockAuthService()
-        if let data = UserDefaults.standard.data(forKey: Self.userKey) {
-            user = try? JSONDecoder().decode(AuthUser.self, from: data)
+        if FirebaseSetup.isConfigured {
+            let firebase = FirebaseAuthService()
+            service = firebase
+            // Firebase keeps the session; the saved copy is only a cache of it.
+            user = firebase.currentUser
+        } else {
+            service = MockAuthService()
+            if let data = UserDefaults.standard.data(forKey: Self.userKey) {
+                user = try? JSONDecoder().decode(AuthUser.self, from: data)
+            }
         }
     }
 
@@ -157,9 +164,11 @@ final class AuthStore {
         if AuthConfig.realAppleSignIn {
             let credential = try await AppleSignIn().run()
             user = try await service.signInWithApple(userID: credential.user, identityToken: credential.identityToken,
+                                                     nonce: credential.nonce,
                                                      fullName: credential.fullName, email: credential.email)
         } else {
-            user = try await service.signInWithApple(userID: "demo", identityToken: nil, fullName: nil, email: nil)
+            user = try await service.signInWithApple(userID: "demo", identityToken: nil, nonce: nil,
+                                                     fullName: nil, email: nil)
         }
         didSignIn()
     }
@@ -206,26 +215,34 @@ final class AuthStore {
 // MARK: - Real Sign in with Apple (used when AuthConfig.realAppleSignIn is on)
 
 /// What we need from Apple's answer, copied out so it can cross actors safely.
-private nonisolated struct AppleCredential: Sendable {
+nonisolated struct AppleCredential: Sendable {
     var user: String
     var identityToken: Data?
+    /// One-time code, used to revoke the Apple sign-in when the account is deleted.
+    var authorizationCode: Data?
     var fullName: PersonNameComponents?
     var email: String?
+    /// The random value Apple's token was made for (the backend checks it to stop replayed tokens).
+    var nonce: String?
 }
 
 @MainActor
-private final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
-                                 ASAuthorizationControllerPresentationContextProviding {
+final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
+                         ASAuthorizationControllerPresentationContextProviding {
     private var continuation: CheckedContinuation<AppleCredential, Error>?
     /// Held until Apple answers (the controller doesn't keep itself alive; `self` stays alive
     /// because the caller is awaiting `run()`).
     private var controller: ASAuthorizationController?
+    private var nonce: String?
 
     func run() async throws -> AppleCredential {
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
+            let nonce = Self.randomNonce()
+            self.nonce = nonce
             let request = ASAuthorizationAppleIDProvider().createRequest()
             request.requestedScopes = [.fullName, .email]
+            request.nonce = SHA256.hash(data: Data(nonce.utf8)).map { String(format: "%02x", $0) }.joined()
             let controller = ASAuthorizationController(authorizationRequests: [request])
             controller.delegate = self
             controller.presentationContextProvider = self
@@ -235,9 +252,16 @@ private final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
     }
 
     private func finish(_ result: Result<AppleCredential, Error>) {
-        continuation?.resume(with: result)
+        continuation?.resume(with: result.map { var credential = $0; credential.nonce = nonce; return credential })
         continuation = nil
         controller = nil
+        nonce = nil
+    }
+
+    private static func randomNonce(length: Int = 32) -> String {
+        let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._")
+        var generator = SystemRandomNumberGenerator()
+        return String((0..<length).map { _ in charset.randomElement(using: &generator)! })
     }
 
     nonisolated func authorizationController(controller: ASAuthorizationController,
@@ -245,6 +269,7 @@ private final class AppleSignIn: NSObject, ASAuthorizationControllerDelegate,
         let result: Result<AppleCredential, Error>
         if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
             result = .success(AppleCredential(user: credential.user, identityToken: credential.identityToken,
+                                              authorizationCode: credential.authorizationCode,
                                               fullName: credential.fullName, email: credential.email))
         } else {
             result = .failure(AuthError.other("Apple didn't return an account."))

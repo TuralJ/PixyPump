@@ -11,7 +11,8 @@ Built with **SwiftUI + SwiftData**. Deployment target iOS 27, Xcode 27, Swift 5 
 2. Pick an iPhone simulator and press **⌘R**.
 3. In a Debug build, **Settings → Developer → Unlock everything** unlocks all cosmetics for testing.
 
-No API keys are needed. Accounts run in demo mode until a backend is connected (see `docs/ARCHITECTURE.md`).
+No API keys are needed. Accounts run in demo mode unless `PixyPump/GoogleService-Info.plist` (from the Firebase
+console, not in git) is present — see Accounts in `docs/ARCHITECTURE.md`.
 
 ## Read these before changing anything
 
