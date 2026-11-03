@@ -18,4 +18,5 @@ Read these before changing anything. They are the same rules people follow (`CON
    tap targets ≥ 44pt, VoiceOver labels on icon-only buttons, respect Reduce Motion.
 8. **Words:** use the terms in `docs/COPY.md` (e.g. "gym bag", "Finish workout", "Log weight").
 9. **Accounts:** screens only use `AuthStore`. Backend work goes in a new `AuthService` implementation.
-10. **Before finishing:** run `python3 scripts/design_lint.py` (must pass) and update any doc your change affects.
+10. **iOS 17 is the minimum.** Any API newer than iOS 17 needs `if #available(...)` plus a working fallback.
+11. **Before finishing:** run `python3 scripts/design_lint.py` (must pass) and update any doc your change affects.

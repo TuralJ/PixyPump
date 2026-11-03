@@ -9,6 +9,9 @@
   that views call. Views stay about layout.
 - **Main actor by default.** Stores are `@MainActor @Observable` singletons (`.shared`). Pure value types
   and constants are `nonisolated`.
+- **Runs on iOS 17+.** That's the floor (SwiftData and `@Observable` need it). Anything newer — e.g. AlarmKit,
+  Liquid Glass (`glassEffect`) — must sit behind `if #available(iOS 26, *)` with a fallback that still works.
+  Test big changes on an iOS 17 or 18 simulator too.
 
 ## Folders (`PixyPump/`)
 

@@ -3,7 +3,7 @@
 A pixel-art gym tracker and calorie counter for iPhone, with a game layer: a buddy you dress up,
 XP and levels, daily challenges, a 🔥 streak, gym bags and a little rest-time game.
 
-Built with **SwiftUI + SwiftData**. Deployment target iOS 27, Xcode 27, Swift 5 language mode with Swift 6 concurrency style (default MainActor).
+Built with **SwiftUI + SwiftData**. Runs on iOS 17 and newer (iPhone XS / XR and later); build with Xcode 27, Swift 5 language mode with Swift 6 concurrency style (default MainActor).
 
 ## Getting started
 

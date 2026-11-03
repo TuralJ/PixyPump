@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-PixyPump is a local-first SwiftUI + SwiftData iPhone app (iOS 27, Xcode 27): a pixel-art gym tracker and
+PixyPump is a local-first SwiftUI + SwiftData iPhone app (iOS 17+, built with Xcode 27): a pixel-art gym tracker and
 calorie counter with a game layer (buddy, XP/levels, streaks, gym bags, missions).
 
 **Follow `AGENTS.md`** (the binding rules for AI assistants) and `CONTRIBUTING.md`. Read the relevant doc in

@@ -18,7 +18,7 @@ jobs:
     name: Build (iOS Simulator)
     runs-on: macos-latest
     needs: design-lint
-    # The app targets iOS 27, so this job needs a runner with Xcode 27.
+    # The app is built with Xcode 27 (it runs on iOS 17+), so this job needs a runner with Xcode 27.
     # Until GitHub's runners have it, failures here can be ignored; the design check still runs.
     continue-on-error: true
     steps:
