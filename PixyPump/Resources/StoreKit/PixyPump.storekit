@@ -1,0 +1,81 @@
+{
+  "identifier": "2FD1D844-3ED1-4D25-8634-A64B7B1F3A8C",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "59.99",
+      "familyShareable": false,
+      "internalID": "6751000003",
+      "localizations": [
+        {
+          "description": "Every look unlocked and a weekly streak freeze, forever.",
+          "displayName": "PixyPump Pro Lifetime",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.magsudturalgymapp.pixypump.pro.lifetime",
+      "referenceName": "Pro Lifetime",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {},
+  "subscriptionGroups": [
+    {
+      "id": "21580001",
+      "localizations": [],
+      "name": "PixyPump Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "4.99",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "6751000001",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Every look unlocked and a weekly streak freeze.",
+              "displayName": "PixyPump Pro Monthly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.magsudturalgymapp.pixypump.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Pro Monthly",
+          "subscriptionGroupID": "21580001",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "29.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6751000002",
+          "introductoryOffer": {
+            "internalID": "6751000004",
+            "paymentMode": "free",
+            "subscriptionPeriod": "P1W"
+          },
+          "localizations": [
+            {
+              "description": "Every look unlocked and a weekly streak freeze.",
+              "displayName": "PixyPump Pro Yearly",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.magsudturalgymapp.pixypump.pro.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Pro Yearly",
+          "subscriptionGroupID": "21580001",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

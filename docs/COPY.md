@@ -29,3 +29,5 @@ Sentences in sentence case; pixel labels can be UPPERCASE.
 | Leaving workout mode | All exercises | Back, Workout list |
 | Looking at another day | Preview, Back to today | View only, Read-only |
 | Workout in progress (the screen) | workout mode (docs only) | session (in UI) |
+| The paid tier | PixyPump Pro / Pro | Premium, Plus, VIP |
+| Paid weekly freeze | streak shield | bonus freeze |

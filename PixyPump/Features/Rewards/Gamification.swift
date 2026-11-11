@@ -69,7 +69,7 @@ struct GameStats {
 
     /// What your buddy items are unlocked by.
     var unlocks: MascotUnlocks {
-        if DevMode.unlockAll { return .everything }
+        if Unlocks.everything { return .everything }
         return MascotUnlocks(level: level.number, chaptersDone: journey.chaptersDone, items: Inventory.items)
     }
 

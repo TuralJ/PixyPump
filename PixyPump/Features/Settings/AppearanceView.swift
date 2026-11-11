@@ -20,6 +20,8 @@ struct AppearanceView: View {
     @State private var mascotUnlocks = MascotUnlocks(level: 1, chaptersDone: 0, items: [])
     @State private var level = 1
     @State private var lockedHint: String?
+    @State private var showingPaywall = false
+    private let pro = ProStore.shared
     /// Progress towards each theme pack (worked out when the screen opens).
     @State private var packProgress: [ThemePack: Int] = [:]
     @State private var iconChoice: AppIconChoice = .pixel
@@ -27,7 +29,7 @@ struct AppearanceView: View {
     @State private var confettiPreview = 0
 
     private func unlocked(_ pack: ThemePack) -> Bool {
-        DevMode.unlockAll || (packProgress[pack] ?? 0) >= pack.goal
+        Unlocks.everything || (packProgress[pack] ?? 0) >= pack.goal
     }
 
     /// Accent colours you can pick: the standard ones plus those from packs you've earned.
@@ -45,6 +47,8 @@ struct AppearanceView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 preview
+
+                if !pro.isPro { proBanner }
 
                 // MARK: Colours
                 groupHeader("Colours", "Theme packs, accent, background and headings.")
@@ -241,20 +245,54 @@ struct AppearanceView: View {
         .tint(Color.brand)
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            level = DevMode.unlockAll ? 999 : GameStats(allSets: allSets).level.number
-            packProgress = Dictionary(uniqueKeysWithValues: ThemePack.allCases.map {
-                ($0, PackProgress.value($0, sets: allSets))
-            })
-            iconChoice = AppIconChoice.current
-            mascotUnlocks = GameStats(allSets: allSets).unlocks
-        }
+        .onAppear(perform: reloadUnlocks)
+        .onChange(of: pro.isPro) { _, _ in reloadUnlocks() }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         // Preview of the confetti you picked (unless celebrations are set to Minimal).
         .overlay {
             if confettiPreview > 0 {
                 PixelConfetti(duration: 1.8).id(confettiPreview)
             }
         }
+    }
+
+    private func reloadUnlocks() {
+        level = Unlocks.everything ? 999 : GameStats(allSets: allSets).level.number
+        packProgress = Dictionary(uniqueKeysWithValues: ThemePack.allCases.map {
+            ($0, PackProgress.value($0, sets: allSets))
+        })
+        iconChoice = AppIconChoice.current
+        mascotUnlocks = GameStats(allSets: allSets).unlocks
+    }
+
+    /// "Unlock every look with Pro" (everything here can also be earned by training).
+    private var proBanner: some View {
+        Button {
+            Haptics.tap()
+            showingPaywall = true
+        } label: {
+            HStack(spacing: DS.Space.m) {
+                PixelHammer(cell: 1.5)
+                VStack(alignment: .leading, spacing: DS.Space.xxs) {
+                    Text("Unlock every look now")
+                        .font(.pixel(DS.TextSize.callout, relativeTo: .headline))
+                        .foregroundStyle(Color.ppText)
+                    Text("Or keep earning them by training. Both are fine.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                Text("PRO")
+                    .font(.pixel(DS.TextSize.caption, relativeTo: .caption))
+                    .foregroundStyle(Color.ppOnAccent)
+                    .padding(.horizontal, DS.Space.s)
+                    .padding(.vertical, DS.Space.xs)
+                    .background(Color.ppText, in: Capsule())
+            }
+            .padding(DS.Space.l)
+            .glassCard(cornerRadius: DS.Radius.tile)
+        }
+        .buttonStyle(.squish)
     }
 
     // MARK: Group headers
@@ -361,7 +399,7 @@ struct AppearanceView: View {
     }
 
     private func bannerTile(_ option: MascotOption) -> some View {
-        let locked = !(DevMode.unlockAll || mascotUnlocks.owns(option, in: .backdrop))
+        let locked = !(Unlocks.everything || mascotUnlocks.owns(option, in: .backdrop))
         let selected = profileBanner == option.id
         return Button {
             if locked {
