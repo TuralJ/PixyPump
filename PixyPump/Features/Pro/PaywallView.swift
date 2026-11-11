@@ -300,7 +300,8 @@ struct PaywallView: View {
         let every = periodName(period)
         let cancel = "Cancel anytime in Settings → Apple ID → Subscriptions."
         if let trialDays {
-            return "Free for \(trialDays) days, then \(selected.displayPrice) per \(every). \(cancel)"
+            return "Free for \(trialDays) days, then \(selected.displayPrice) per \(every), renews automatically "
+                + "until you cancel. Cancel at least 24 hours before the trial ends to avoid being charged. \(cancel)"
         }
         return "\(selected.displayPrice) per \(every), renews automatically until you cancel. \(cancel)"
     }
@@ -319,20 +320,27 @@ struct PaywallView: View {
 
             Text(termsText)
                 .font(.caption)
-                .foregroundStyle(Color.ppText.opacity(0.5))
+                .foregroundStyle(Color.ppText.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            HStack(spacing: DS.Space.l) {
-                Link("Terms", destination: ProConfig.termsURL)
-                Button("Privacy") { showPrivacy = true }
-                Button(restoring ? "Restoring…" : "Restore purchases", action: restore)
-                    .disabled(restoring || purchasing)
+            // Side by side, or stacked when large text doesn't fit on one line.
+            ViewThatFits {
+                HStack(spacing: DS.Space.l) { legalLinks }
+                VStack(spacing: DS.Space.xs) { legalLinks }
             }
             .font(.caption)
             .foregroundStyle(Color.ppText.opacity(0.7))
             .frame(minHeight: DS.Size.minTap)
         }
+    }
+
+    @ViewBuilder
+    private var legalLinks: some View {
+        Link("Terms of Use", destination: ProConfig.termsURL)
+        Button("Privacy Policy") { showPrivacy = true }
+        Button(restoring ? "Restoring…" : "Restore purchases", action: restore)
+            .disabled(restoring || purchasing)
     }
 
     private func buy() {
@@ -347,6 +355,8 @@ struct PaywallView: View {
                 case .pending: message = "Your purchase is waiting for approval. Pro switches on as soon as it's approved."
                 case .cancelled: break
                 }
+            } catch StoreKitError.userCancelled {
+                // Closed the App Store sheet: nothing to say.
             } catch {
                 message = error.localizedDescription
             }
@@ -361,6 +371,8 @@ struct PaywallView: View {
             do {
                 try await store.restore()
                 if !store.isPro { message = "No Pro purchase found for this Apple ID." }
+            } catch StoreKitError.userCancelled {
+                // Closed the Apple ID sign-in: nothing to say.
             } catch {
                 message = "Couldn't reach the App Store. Check your connection and try again."
             }
@@ -411,7 +423,7 @@ struct ProSection: View {
                     VStack(alignment: .leading, spacing: DS.Space.xxs) {
                         Text(store.isPro ? "\(AppInfo.name) Pro" : "Get \(AppInfo.name) Pro")
                             .foregroundStyle(Color.ppText)
-                        Text(store.isPro ? "Active · every look unlocked" : "Every look, a weekly streak freeze, no ads ever.")
+                        Text(store.isPro ? "Active · every look unlocked" : "Every look and a weekly streak freeze.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

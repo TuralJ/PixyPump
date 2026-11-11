@@ -58,7 +58,7 @@ new versioned key (`…v2`) and migrate instead. Every new key must also be adde
 | Account | `auth.user.v1`, `auth.nudgeDismissed` |
 | Tips | `tips.workoutMode` |
 | Clean-up | `homeOrder`, `homeHidden` (old Home layout, only cleared), `exercisePhotosRemoved.v1` (one-time removal of old exercise photos) |
-| Pro | `pro.active.v1` (cache of the App Store entitlement; refreshed every launch, not deleted with "Delete my data") |
+| Pro | `pro.active.v1` (cache of the App Store entitlement; refreshed every launch), `pro.since.v1` (first day of Pro), `pro.shieldDays.v1` (days the weekly shield saved; kept if Pro ends) |
 | Debug | `dev.unlockAll` |
 
 ## Pro (in-app purchase)
@@ -70,7 +70,8 @@ new versioned key (`…v2`) and migrate instead. Every new key must also be adde
   - `com.magsudturalgymapp.pixypump.pro.yearly`: auto-renewable, 1 year, same group, intro offer: 1-week free trial
   - `com.magsudturalgymapp.pixypump.pro.lifetime`: non-consumable
 - **What Pro does:** `Unlocks.everything` is true (every theme pack, app icon, buddy item, skin), and the daily
-  streak gets one free freeze per week (`DailyStreak.compute`). Tracking, plans and calories never need Pro.
+  streak gets one free freeze per week from the day Pro started (`DailyStreak.compute`). Days it saved are stored, so
+  a streak never shrinks if Pro ends. Tracking, plans and calories never need Pro.
 - **Rules:** prices and trial length always come from StoreKit (never hardcoded); the paywall always shows the
   price after the trial, how to cancel, Terms (Apple EULA), Privacy and Restore purchases.
 - **Testing:** `PixyPump/Resources/StoreKit/PixyPump.storekit` — Product → Scheme → Edit Scheme → Run → Options →

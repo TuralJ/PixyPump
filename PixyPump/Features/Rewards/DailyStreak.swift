@@ -86,7 +86,10 @@ enum DailyStreak {
         var run = 0, best = 0, freezes = 0
         var frozen = Set<Date>()
         // Pro's streak shield: one free freeze each week (renews on the first day of the week, doesn't stack).
+        // Only days after Pro started can use it, and days it saved stay saved even if Pro ends later.
         let pro = ProStatus.isActive
+        let proSince = ProStatus.since.map { cal.startOfDay(for: $0) }
+        var shieldDays = ProStatus.shieldDays
         var weekly = pro ? 1 : 0
         var d = start
         while d < today {
@@ -94,8 +97,12 @@ enum DailyStreak {
             if secured.contains(d) {
                 run += 1
                 if run % 7 == 0 { freezes = min(freezes + 1, maxFreezes) }
-            } else if run > 0 && weekly > 0 {
+            } else if run > 0 && shieldDays.contains(d) {
+                if pro { weekly = max(weekly - 1, 0) }
+                frozen.insert(d)            // saved earlier by the Pro shield
+            } else if run > 0 && pro && weekly > 0, let proSince, d >= proSince {
                 weekly -= 1
+                shieldDays.insert(d)
                 frozen.insert(d)
             } else if run > 0 && freezes > 0 {
                 freezes -= 1
@@ -114,6 +121,7 @@ enum DailyStreak {
             d = next
         }
         if pro, cal.component(.weekday, from: today) == cal.firstWeekday { weekly = 1 }
+        if shieldDays != ProStatus.shieldDays { ProStatus.shieldDays = shieldDays }
         let securedToday = secured.contains(today)
         if securedToday {
             run += 1

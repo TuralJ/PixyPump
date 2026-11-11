@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import StoreKit
 
 // PixyPump Pro: an optional subscription (monthly / yearly) or a one-off lifetime purchase.
@@ -25,7 +26,27 @@ nonisolated enum ProConfig {
 /// can read it straight away. StoreKit checks the real purchases again on every launch.
 nonisolated enum ProStatus {
     static let key = "pro.active.v1"
+    /// When Pro first switched on (the weekly streak shield only covers days after this).
+    static let sinceKey = "pro.since.v1"
+    /// Days the shield saved, kept even if Pro ends so a streak never shrinks afterwards.
+    static let shieldDaysKey = "pro.shieldDays.v1"
+
     static var isActive: Bool { UserDefaults.standard.bool(forKey: key) }
+
+    static var since: Date? {
+        let t = UserDefaults.standard.double(forKey: sinceKey)
+        return t > 0 ? Date(timeIntervalSince1970: t) : nil
+    }
+
+    static var shieldDays: Set<Date> {
+        get {
+            let times = UserDefaults.standard.array(forKey: shieldDaysKey) as? [Double] ?? []
+            return Set(times.map { Date(timeIntervalSince1970: $0) })
+        }
+        set {
+            UserDefaults.standard.set(newValue.map(\.timeIntervalSince1970).sorted(), forKey: shieldDaysKey)
+        }
+    }
 }
 
 /// Everything cosmetic unlocked: Pro, or owner mode in Debug builds.
@@ -36,7 +57,7 @@ nonisolated enum Unlocks {
 nonisolated enum ProError: LocalizedError {
     case unverified
     var errorDescription: String? {
-        "The App Store couldn't confirm this purchase. Nothing was charged twice; please try again."
+        "The App Store couldn't confirm this purchase. If you were charged, tap Restore purchases."
     }
 }
 
@@ -74,7 +95,11 @@ final class ProStore {
     }
 
     func loadProducts() async {
-        guard products.isEmpty, !isLoading else { return }
+        guard !isLoading else { return }
+        guard products.isEmpty else {
+            await refreshTrialEligibility()     // can change after a purchase, refund or lapse
+            return
+        }
         isLoading = true
         loadFailed = false
         defer { isLoading = false }
@@ -82,12 +107,19 @@ final class ProStore {
             let loaded = try await Product.products(for: ProConfig.productIDs)
             products = ProConfig.productIDs.compactMap { id in loaded.first { $0.id == id } }
             loadFailed = products.isEmpty
-            if let subscription = product(ProConfig.yearly)?.subscription, subscription.introductoryOffer != nil {
-                trialEligible = await subscription.isEligibleForIntroOffer
-            }
+            await refreshTrialEligibility()
         } catch {
             loadFailed = true
         }
+    }
+
+    /// The trial is once per Apple ID per subscription group, so ask the App Store each time the paywall opens.
+    private func refreshTrialEligibility() async {
+        guard let subscription = product(ProConfig.yearly)?.subscription, subscription.introductoryOffer != nil else {
+            trialEligible = false
+            return
+        }
+        trialEligible = await subscription.isEligibleForIntroOffer
     }
 
     func product(_ id: String) -> Product? {
@@ -106,9 +138,13 @@ final class ProStore {
             active = transaction.productID
             if transaction.productID == ProConfig.lifetime { break }
         }
+        // Save first, so unlock checks that read `ProStatus` agree when screens react to `isPro`.
+        UserDefaults.standard.set(active != nil, forKey: ProStatus.key)
+        if active != nil, ProStatus.since == nil {
+            UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: ProStatus.sinceKey)
+        }
         activeProductID = active
         isPro = active != nil
-        UserDefaults.standard.set(isPro, forKey: ProStatus.key)
     }
 
     enum PurchaseOutcome {
