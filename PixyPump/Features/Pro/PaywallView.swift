@@ -168,6 +168,13 @@ struct PaywallView: View {
                     Text("Couldn't load prices from the App Store.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
+                    #if DEBUG
+                    // Developer hint: in the simulator, prices come from PixyPump.storekit.
+                    Text("Debug: \(store.debugReason). Run with ⌘R from Xcode and check Edit Scheme → Run → Options → StoreKit Configuration.")
+                        .font(.caption2)
+                        .foregroundStyle(Color.ppFlame)
+                        .multilineTextAlignment(.center)
+                    #endif
                     Button("Try again") { Task { await store.loadProducts() } }
                         .font(.pixel(DS.TextSize.footnote, relativeTo: .footnote))
                         .foregroundStyle(Color.brand)

@@ -1,4 +1,14 @@
 {
+  "appPolicies": {
+    "eula": "",
+    "policies": [
+      {
+        "locale": "en_US",
+        "policyText": "",
+        "policyURL": ""
+      }
+    ]
+  },
   "identifier": "2FD1D844-3ED1-4D25-8634-A64B7B1F3A8C",
   "nonRenewingSubscriptions": [],
   "products": [
@@ -18,7 +28,12 @@
       "type": "NonConsumable"
     }
   ],
-  "settings": {},
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storeKitErrors": [],
+    "_storefront": "USA"
+  },
   "subscriptionGroups": [
     {
       "id": "21580001",
@@ -44,7 +59,8 @@
           "recurringSubscriptionPeriod": "P1M",
           "referenceName": "Pro Monthly",
           "subscriptionGroupID": "21580001",
-          "type": "RecurringSubscription"
+          "type": "RecurringSubscription",
+          "winbackOffers": []
         },
         {
           "adHocOffers": [],
@@ -55,6 +71,7 @@
           "internalID": "6751000002",
           "introductoryOffer": {
             "internalID": "6751000004",
+            "numberOfPeriods": 1,
             "paymentMode": "free",
             "subscriptionPeriod": "P1W"
           },
@@ -69,13 +86,14 @@
           "recurringSubscriptionPeriod": "P1Y",
           "referenceName": "Pro Yearly",
           "subscriptionGroupID": "21580001",
-          "type": "RecurringSubscription"
+          "type": "RecurringSubscription",
+          "winbackOffers": []
         }
       ]
     }
   ],
   "version": {
-    "major": 3,
+    "major": 4,
     "minor": 0
   }
 }

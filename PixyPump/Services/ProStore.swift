@@ -107,11 +107,16 @@ final class ProStore {
             let loaded = try await Product.products(for: ProConfig.productIDs)
             products = ProConfig.productIDs.compactMap { id in loaded.first { $0.id == id } }
             loadFailed = products.isEmpty
+            debugReason = products.isEmpty ? "the App Store returned 0 of \(ProConfig.productIDs.count) products" : ""
             await refreshTrialEligibility()
         } catch {
             loadFailed = true
+            debugReason = "error: \(error.localizedDescription)"
         }
     }
+
+    /// Why products didn't load (shown only in Debug builds).
+    private(set) var debugReason = ""
 
     /// The trial is once per Apple ID per subscription group, so ask the App Store each time the paywall opens.
     private func refreshTrialEligibility() async {
