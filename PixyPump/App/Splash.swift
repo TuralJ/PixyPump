@@ -7,7 +7,6 @@ import UIKit
 
 struct SplashView: View {
     let onFinish: () -> Void
-
     @State private var start = Date.now
     @State private var finished = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
