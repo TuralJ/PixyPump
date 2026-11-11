@@ -51,6 +51,9 @@
             ReferencedContainer = "container:PixyPump.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../PixyPump/Resources/StoreKit/PixyPump.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

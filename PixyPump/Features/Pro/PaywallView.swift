@@ -62,22 +62,21 @@ struct PaywallView: View {
 
     // MARK: Background
 
+    /// Soft glows behind the hero. Drawn as gradients in an overlay so they never widen the screen.
     private var background: some View {
-        ZStack {
-            AppBackground()
-            Ellipse()
-                .fill(Color.ppMuted.opacity(0.4))
-                .frame(width: 520, height: 300)
-                .blur(radius: 90)
-                .offset(y: -330)
-            Circle()
-                .fill(Color.brand.opacity(0.3))
-                .frame(width: 240, height: 240)
-                .blur(radius: 80)
-                .offset(y: -250)
-        }
-        .ignoresSafeArea()
-        .accessibilityHidden(true)
+        AppBackground()
+            .overlay(alignment: .top) {
+                ZStack {
+                    RadialGradient(colors: [Color.ppMuted.opacity(0.35), .clear],
+                                   center: .top, startRadius: 0, endRadius: 420)
+                    RadialGradient(colors: [Color.brand.opacity(0.25), .clear],
+                                   center: UnitPoint(x: 0.5, y: 0.25), startRadius: 0, endRadius: 180)
+                }
+                .frame(height: 460)
+                .allowsHitTesting(false)
+            }
+            .ignoresSafeArea()
+            .accessibilityHidden(true)
     }
 
     private var closeButton: some View {
