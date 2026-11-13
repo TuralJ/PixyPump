@@ -95,7 +95,7 @@ enum PackProgress {
     }
 
     static func isUnlocked(_ pack: ThemePack, sets: [WorkoutSet]) -> Bool {
-        DevMode.unlockAll || value(pack, sets: sets) >= pack.goal
+        Unlocks.everything || value(pack, sets: sets) >= pack.goal
     }
 }
 

@@ -121,3 +121,10 @@ Account · Profile · Training · Food · Look & Buddy (buddy, Appearance, sound
 Data & privacy (backup, export, delete) · About · Developer (Debug only).
 Appearance: Colours (theme packs, accent, background, headings) · Your stuff (app icon, banner, XP bar,
 rest timer, plates, confetti) · Feel (celebrations).
+
+## Pro (paywall)
+
+- Opened only by the person: Settings → "Get PixyPump Pro", or the Appearance banner. No pop-ups, no timers.
+- One screen: what Pro adds → three plans (yearly selected) → one button → the terms in plain words.
+- The button says exactly what happens ("Start 7-day free trial", "Subscribe", "Buy lifetime").
+- Already Pro: the same sheet shows "You're Pro" with Manage subscription.

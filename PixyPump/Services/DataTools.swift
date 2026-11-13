@@ -123,6 +123,7 @@ enum DataTools {
             "streakReminderOn", DevMode.unlockAllKey, TabRequest.key, AuthStore.nudgeDismissedKey,
             // Workout mode.
             "restExercise", WorkoutModeTips.seenKey,
+            ProStatus.shieldDaysKey,   // the purchase itself (pro.active / pro.since) belongs to the Apple ID
         ]
         for key in keys { defaults.removeObject(forKey: key) }
         removeExportedFiles()

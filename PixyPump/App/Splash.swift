@@ -7,7 +7,6 @@ import UIKit
 
 struct SplashView: View {
     let onFinish: () -> Void
-
     @State private var start = Date.now
     @State private var finished = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -185,4 +184,26 @@ enum SplashArt {
         "l": 0xDEE0E4,
         "m": 0x91A4BA,
     ]
+}
+
+/// The app icon's hammer, still (for the paywall and anywhere the logo is needed in the app).
+struct PixelHammer: View {
+    /// Size of one pixel in points.
+    var cell: CGFloat = 4
+
+    var body: some View {
+        let rows = SplashArt.rows
+        let cols = rows.first?.count ?? 0
+        Canvas { context, _ in
+            for (y, row) in rows.enumerated() {
+                for (x, ch) in row.enumerated() where ch != "." {
+                    guard let hex = SplashArt.palette[ch] else { continue }
+                    let rect = CGRect(x: CGFloat(x) * cell, y: CGFloat(y) * cell, width: cell, height: cell)
+                    context.fill(Path(rect), with: .color(Color(hex: hex)))
+                }
+            }
+        }
+        .frame(width: CGFloat(cols) * cell, height: CGFloat(rows.count) * cell)
+        .accessibilityHidden(true)
+    }
 }

@@ -83,6 +83,7 @@ struct ContentView: View {
             checkedFirstLaunch = true
             SFX.preload()
             removeOldExercisePhotos()
+            await ProStore.shared.start()
         }
     }
 }

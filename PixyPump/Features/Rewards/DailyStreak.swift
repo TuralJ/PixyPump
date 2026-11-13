@@ -6,6 +6,7 @@ import UserNotifications
 // (log food, weigh in) keep it alive too — no need to lift every day.
 // Every 7 days in a row earns a freeze (hold up to 2) that saves one missed day.
 // Gym bags can also drop a "Streak freeze" (saved in the inventory, hold up to 3 more).
+// Pro adds one free freeze each week (the "streak shield").
 // This is the one and only streak in the app.
 
 struct DailyStreakState {
@@ -84,11 +85,25 @@ enum DailyStreak {
 
         var run = 0, best = 0, freezes = 0
         var frozen = Set<Date>()
+        // Pro's streak shield: one free freeze each week (renews on the first day of the week, doesn't stack).
+        // Only days after Pro started can use it, and days it saved stay saved even if Pro ends later.
+        let pro = ProStatus.isActive
+        let proSince = ProStatus.since.map { cal.startOfDay(for: $0) }
+        var shieldDays = ProStatus.shieldDays
+        var weekly = pro ? 1 : 0
         var d = start
         while d < today {
+            if pro, d != start, cal.component(.weekday, from: d) == cal.firstWeekday { weekly = 1 }
             if secured.contains(d) {
                 run += 1
                 if run % 7 == 0 { freezes = min(freezes + 1, maxFreezes) }
+            } else if run > 0 && shieldDays.contains(d) {
+                if pro { weekly = max(weekly - 1, 0) }
+                frozen.insert(d)            // saved earlier by the Pro shield
+            } else if run > 0 && pro && weekly > 0, let proSince, d >= proSince {
+                weekly -= 1
+                shieldDays.insert(d)
+                frozen.insert(d)
             } else if run > 0 && freezes > 0 {
                 freezes -= 1
                 frozen.insert(d)            // saved: the streak carries on (without counting the day)
@@ -105,6 +120,8 @@ enum DailyStreak {
             guard let next = cal.date(byAdding: .day, value: 1, to: d) else { break }
             d = next
         }
+        if pro, cal.component(.weekday, from: today) == cal.firstWeekday { weekly = 1 }
+        if shieldDays != ProStatus.shieldDays { ProStatus.shieldDays = shieldDays }
         let securedToday = secured.contains(today)
         if securedToday {
             run += 1
@@ -112,7 +129,7 @@ enum DailyStreak {
         }
         let bagLeft = min(bagUnused.count, maxBagFreezes)
         bagFreezesLeft = bagLeft
-        return DailyStreakState(current: run, best: best, securedToday: securedToday, freezes: freezes + bagLeft,
+        return DailyStreakState(current: run, best: best, securedToday: securedToday, freezes: freezes + bagLeft + weekly,
                                 frozenDays: frozen, securedDays: secured, bagFreezes: bagLeft)
     }
 

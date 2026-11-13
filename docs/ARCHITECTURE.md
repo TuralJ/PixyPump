@@ -32,6 +32,7 @@ Xcode uses a synchronized folder, so new files and folders are picked up automat
 | `Features/Buddy` | The pixel buddy (`Mascot`, generated `MascotSprites`) and its editor |
 | `Features/Onboarding` | First-launch flow |
 | `Features/Settings` | Settings, Appearance, customisation types (`Customize`), About, Legal |
+| `Features/Pro` | Paywall and the Settings Pro row (`ProStore` lives in `Services/`) |
 | `Features/Account` | Sign-in screens and Settings → Account |
 | `Resources/` | Sounds (`sfx_*.wav`, 3 packs) and the pixel font |
 
@@ -57,7 +58,25 @@ new versioned key (`…v2`) and migrate instead. Every new key must also be adde
 | Account | `auth.user.v1`, `auth.nudgeDismissed` |
 | Tips | `tips.workoutMode` |
 | Clean-up | `homeOrder`, `homeHidden` (old Home layout, only cleared), `exercisePhotosRemoved.v1` (one-time removal of old exercise photos) |
+| Pro | `pro.active.v1` (cache of the App Store entitlement; refreshed every launch), `pro.since.v1` (first day of Pro), `pro.shieldDays.v1` (days the weekly shield saved; kept if Pro ends) |
 | Debug | `dev.unlockAll` |
+
+## Pro (in-app purchase)
+
+`Services/ProStore.swift` (StoreKit 2) + `Features/Pro/PaywallView.swift` (design: Figma gym-app → 02 Paywall).
+
+- **Products** (create them in App Store Connect with these exact IDs):
+  - `com.magsudturalgymapp.pixypump.pro.monthly`: auto-renewable, 1 month, group "PixyPump Pro"
+  - `com.magsudturalgymapp.pixypump.pro.yearly`: auto-renewable, 1 year, same group, intro offer: 1-week free trial
+  - `com.magsudturalgymapp.pixypump.pro.lifetime`: non-consumable
+- **What Pro does:** `Unlocks.everything` is true (every theme pack, app icon, buddy item, skin), and the daily
+  streak gets one free freeze per week from the day Pro started (`DailyStreak.compute`). Days it saved are stored, so
+  a streak never shrinks if Pro ends. Tracking, plans and calories never need Pro.
+- **Rules:** prices and trial length always come from StoreKit (never hardcoded); the paywall always shows the
+  price after the trial, how to cancel, Terms (Apple EULA), Privacy and Restore purchases.
+- **Testing:** `PixyPump/Resources/StoreKit/PixyPump.storekit` — Product → Scheme → Edit Scheme → Run → Options →
+  StoreKit Configuration. TestFlight uses the real sandbox instead.
+- **Entry points:** Settings → first row, and the banner on Appearance. Don't add pop-up paywalls elsewhere.
 
 ## Accounts (backend plug)
 

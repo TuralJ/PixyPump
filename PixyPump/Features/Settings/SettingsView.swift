@@ -99,6 +99,7 @@ struct SettingsView: View {
         let _ = (accentID, surfaceID, headings)
         NavigationStack {
             Form {
+                ProSection()
                 AccountSection()
                 profileSection
                 trainingSection
